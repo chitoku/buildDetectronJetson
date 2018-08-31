@@ -1,0 +1,27 @@
+diff --git a/buildOpenCV.sh b/buildOpenCV.sh
+index 5236422..35771c6 100755
+--- a/buildOpenCV.sh
++++ b/buildOpenCV.sh
+@@ -3,8 +3,10 @@
+ # Copyright(c) JetsonHacks (2017-2018)
+ 
+ OPENCV_VERSION=3.4.1
++# Jetson Xavier
++ARCH_BIN=7.2
+ # Jetson TX2
+-ARCH_BIN=6.2
++#ARCH_BIN=6.2
+ # Jetson TX1
+ # ARCH_BIN=5.3
+ INSTALL_DIR=/usr/local
+@@ -95,8 +97,8 @@ sudo apt-get install -y \
+ cd /usr/local/cuda/include
+ sudo patch -N cuda_gl_interop.h $WHEREAMI'/patches/OpenGLHeader.patch' 
+ # Clean up the OpenGL tegra libs that usually get crushed
+-cd /usr/lib/aarch64-linux-gnu/
+-sudo ln -sf tegra/libGL.so libGL.so
++#cd /usr/lib/aarch64-linux-gnu/
++#sudo ln -sf tegra/libGL.so libGL.so
+ 
+ # Python 2.7
+ sudo apt-get install -y python-dev python-numpy python-py python-pytest
