@@ -1,0 +1,133 @@
+diff --git a/detectron/utils/vis.py b/detectron/utils/vis.py
+index 4f05637..2392d3f 100644
+--- a/detectron/utils/vis.py
++++ b/detectron/utils/vis.py
+@@ -251,7 +251,7 @@ def vis_one_image_opencv(
+ def vis_one_image(
+         im, im_name, output_dir, boxes, segms=None, keypoints=None, thresh=0.9,
+         kp_thresh=2, dpi=200, box_alpha=0.0, dataset=None, show_class=False,
+-        ext='pdf', out_when_no_box=False):
++        ext='jpg'):
+     """Visual debugging of detections."""
+     if not os.path.exists(output_dir):
+         os.makedirs(output_dir)
+@@ -307,7 +307,7 @@ def vis_one_image(
+             ax.text(
+                 bbox[0], bbox[1] - 2,
+                 get_class_string(classes[i], score, dataset),
+-                fontsize=3,
++                fontsize=10,
+                 family='serif',
+                 bbox=dict(
+                     facecolor='g', alpha=0.4, pad=0, edgecolor='none'),
+@@ -390,3 +390,40 @@ def vis_one_image(
+     output_name = os.path.basename(im_name) + '.' + ext
+     fig.savefig(os.path.join(output_dir, '{}'.format(output_name)), dpi=dpi)
+     plt.close('all')
++
++
++
++    #Detectron processes each image using matpyplot
++    #change figure to numpy data to visualized
++    image = fig2data(fig)
++    image = image[...,::-1]
++
++    cv2.namedWindow("window", cv2.WINDOW_NORMAL)
++    cv2.imshow("window", image)
++    cv2.waitKey(1)
++
++    # output_name = os.path.basename(im_name) + '.' + ext
++    # fig.savefig(os.path.join(output_dir, '{}'.format(output_name)), dpi=dpi)
++    plt.close('all')
++
++
++def fig2data ( fig ):
++    """
++    @brief Convert a Matplotlib figure to a 4D numpy array with RGBA channels and return it
++    @param fig a matplotlib figure
++    @return a numpy 3D array of RGBA values
++    """
++    # draw the renderer
++    fig.canvas.draw( )
++ 
++    # Get the RGBA buffer from the figure
++    w,h = fig.canvas.get_width_height()
++    buf = np.fromstring ( fig.canvas.tostring_argb(), dtype=np.uint8 )
++    buf.shape = ( h, w, 4 )
++ 
++    # canvas.tostring_argb give pixmap in ARGB mode. Roll the ALPHA channel to have it in RGBA mode
++    buf = np.roll ( buf, 3, axis = 2)
++    buf = buf[:,:,:3]
++
++
++    return buf
+diff --git a/tools/infer_simple.py b/tools/infer_simple.py
+index 721d1c8..73fdfd0 100644
+--- a/tools/infer_simple.py
++++ b/tools/infer_simple.py
+@@ -15,8 +15,10 @@
+ # limitations under the License.
+ ##############################################################################
+ 
+-"""Perform inference on a single image or all images with a certain extension
++"""Perform a simple inference on a single image or all images with a certain extension
+ (e.g., .jpg) in a folder.
++
++Original source: https://github.com/facebookresearch/Detectron/blob/master/tools/infer_simple.py
+ """
+ 
+ from __future__ import absolute_import
+@@ -126,14 +128,21 @@ def main(args):
+     else:
+         im_list = [args.im_or_folder]
+ 
+-    for i, im_name in enumerate(im_list):
+-        out_name = os.path.join(
+-            args.output_dir, '{}'.format(os.path.basename(im_name) + '.' + args.output_ext)
+-        )
+-        logger.info('Processing {} -> {}'.format(im_name, out_name))
+-        im = cv2.imread(im_name)
++    """
++    Add support for webcam
++    """
++    # Set and get camera from OpenCV
++    cam = cv2.VideoCapture(1)
++
++    im_name = 'tmp_im'
++
++    while True:
++        # Fetch image from camera
++        _, im = cam.read()
++
+         timers = defaultdict(Timer)
+         t = time.time()
++
+         with c2_utils.NamedCudaScope(0):
+             cls_boxes, cls_segms, cls_keyps = infer_engine.im_detect_all(
+                 model, im, None, timers=timers
+@@ -141,7 +150,7 @@ def main(args):
+         logger.info('Inference time: {:.3f}s'.format(time.time() - t))
+         for k, v in timers.items():
+             logger.info(' | {}: {:.3f}s'.format(k, v.average_time))
+-        if i == 0:
++        if 0:
+             logger.info(
+                 ' \ Note: inference on the first image will be slower than the '
+                 'rest (caches and auto-tuning need to warm up)'
+@@ -159,13 +168,14 @@ def main(args):
+             show_class=True,
+             thresh=0.7,
+             kp_thresh=2,
+-            ext=args.output_ext,
+-            out_when_no_box=args.out_when_no_box
++            ext='jpg'  # default is PDF, but we want JPG.
+         )
+ 
++    cv2.destroyAllWindows()
+ 
+ if __name__ == '__main__':
+     workspace.GlobalInit(['caffe2', '--caffe2_log_level=0'])
+     setup_logging(__name__)
+     args = parse_args()
+     main(args)
++
