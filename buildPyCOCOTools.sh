@@ -1,9 +1,9 @@
 #!/bin/bash
 
 sudo apt-get install python-scipy python-matplotlib
-pip install --user scipy 
+sudo pip install scipy 
 
-pip install --user cython
+sudo pip install cython
 
 COCOAPI=/home/nvidia/cocoapi
 git clone https://github.com/cocodataset/cocoapi.git ${COCOAPI}

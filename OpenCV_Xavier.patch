@@ -1,5 +1,5 @@
 diff --git a/buildOpenCV.sh b/buildOpenCV.sh
-index 5236422..35771c6 100755
+index 5236422..197531f 100755
 --- a/buildOpenCV.sh
 +++ b/buildOpenCV.sh
 @@ -3,8 +3,10 @@
@@ -25,3 +25,12 @@ index 5236422..35771c6 100755
  
  # Python 2.7
  sudo apt-get install -y python-dev python-numpy python-py python-pytest
+@@ -151,6 +153,8 @@ time cmake -D CMAKE_BUILD_TYPE=RELEASE \
+       -D WITH_GSTREAMER_0_10=OFF \
+       -D WITH_QT=ON \
+       -D WITH_OPENGL=ON \
++      -D CXXFLAGS="-std=c++11" \
++      -D CUDA_NVCC_FLAGS="--expt-relaxed-constexpr" \
+       ../
+ 
+ if [ $? -eq 0 ] ; then

@@ -33,11 +33,11 @@ sudo apt-get install -y --no-install-recommends \
       graphviz 
 
 echo -e "\e[41m ### bdist_wheel install ###"
-pip install --user wheel
-python setup.py bdist_wheel
+#pip install --user wheel
+#python setup.py bdist_wheel
 
 echo -e "\e[105m ### pip install ###"
-pip install --user \
+sudo pip install \
       wheel \
       future \
       numpy \
@@ -49,16 +49,28 @@ pip install --user \
 echo -e "\e[45m ### sudo apt-get install libgflags-dev ###"
 sudo apt-get install -y --no-install-recommends libgflags-dev
 
+# Install GCC/G++ 6.4.0
+echo -e "\e[40m ### Install GCC/G++ 6.4.0 ###"
+sudo apt-get install gcc-6 g++-6
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 10
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 10
+sudo update-alternatives --set cc /usr/bin/gcc
+sudo update-alternatives --set c++ /usr/bin/g++
+gcc --version
+g++ --version
+
+
 # Clone & Build
 
 cd
+sudo rm -rf ./pytorch
 echo -e "\e[100m ### git clone pytorch ###"
 git clone https://github.com/pytorch/pytorch.git && cd pytorch
 git checkout v0.4.1
 git submodule update --init --recursive
 git apply ${DIR}/pytorch_CUDA10.patch
 echo -e "\e[104m ### PyTorch build ###"
-FULL_CAFFE2=1 python setup.py install --user
+sudo FULL_CAFFE2=1 python setup.py install
 
 # Test the Caffe2 Installation
 
