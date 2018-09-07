@@ -1,0 +1,103 @@
+diff --git a/detectron/utils/colormap.py b/detectron/utils/colormap.py
+index bc6869f..9961bf7 100644
+--- a/detectron/utils/colormap.py
++++ b/detectron/utils/colormap.py
+@@ -27,7 +27,7 @@ def colormap(rgb=False):
+     color_list = np.array(
+         [
+             0.000, 0.447, 0.741,
+-            0.850, 0.325, 0.098,
++            0.098, 0.447, 0.850, #1
+             0.929, 0.694, 0.125,
+             0.494, 0.184, 0.556,
+             0.466, 0.674, 0.188,
+@@ -83,13 +83,13 @@ def colormap(rgb=False):
+             0.333, 0.000, 0.000,
+             0.500, 0.000, 0.000,
+             0.667, 0.000, 0.000,
+-            0.833, 0.000, 0.000,
++            0.833, 0.000, 0.000, #57 chair
+             1.000, 0.000, 0.000,
+             0.000, 0.167, 0.000,
+             0.000, 0.333, 0.000,
+-            0.000, 0.500, 0.000,
++            0.833, 0.167, 0.000, #61 table
+             0.000, 0.667, 0.000,
+-            0.000, 0.833, 0.000,
++            0.833, 0.833, 0.000, #63 TV
+             0.000, 1.000, 0.000,
+             0.000, 0.000, 0.167,
+             0.000, 0.000, 0.333,
+diff --git a/detectron/utils/vis.py b/detectron/utils/vis.py
+index 4f05637..1f3992e 100644
+--- a/detectron/utils/vis.py
++++ b/detectron/utils/vis.py
+@@ -91,7 +91,7 @@ def convert_from_cls_format(cls_boxes, cls_segms, cls_keyps):
+ def get_class_string(class_index, score, dataset):
+     class_text = dataset.classes[class_index] if dataset is not None else \
+         'id{:d}'.format(class_index)
+-    return class_text + ' {:0.2f}'.format(score).lstrip('0')
++    return class_text + ' {:0.2f}'.format(score).lstrip('0') 
+ 
+ 
+ def vis_mask(img, mask, col, alpha=0.4, show_border=True, border_thick=1):
+@@ -251,7 +251,7 @@ def vis_one_image_opencv(
+ def vis_one_image(
+         im, im_name, output_dir, boxes, segms=None, keypoints=None, thresh=0.9,
+         kp_thresh=2, dpi=200, box_alpha=0.0, dataset=None, show_class=False,
+-        ext='pdf', out_when_no_box=False):
++        ext='jpg', out_when_no_box=False):
+     """Visual debugging of detections."""
+     if not os.path.exists(output_dir):
+         os.makedirs(output_dir)
+@@ -303,11 +303,15 @@ def vis_one_image(
+                           fill=False, edgecolor='g',
+                           linewidth=0.5, alpha=box_alpha))
+ 
++        class_id = classes[i]
++        #class_text = dataset.classes[i]
++
+         if show_class:
+             ax.text(
+                 bbox[0], bbox[1] - 2,
+-                get_class_string(classes[i], score, dataset),
+-                fontsize=3,
++                #get_class_string(classes[i], score, dataset),
++                class_id,
++                fontsize=20,
+                 family='serif',
+                 bbox=dict(
+                     facecolor='g', alpha=0.4, pad=0, edgecolor='none'),
+@@ -316,14 +320,15 @@ def vis_one_image(
+         # show mask
+         if segms is not None and len(segms) > i:
+             img = np.ones(im.shape)
+-            color_mask = color_list[mask_color_id % len(color_list), 0:3]
++            #color_mask = color_list[mask_color_id % len(color_list), 0:3]
++            color_mask = color_list[class_id, 0:3]
+             mask_color_id += 1
+ 
+-            w_ratio = .4
+-            for c in range(3):
+-                color_mask[c] = color_mask[c] * (1 - w_ratio) + w_ratio
+-            for c in range(3):
+-                img[:, :, c] = color_mask[c]
++#            iw_ratio = .4
++#            for c in range(3):
++#                color_mask[c] = color_mask[c] * (1 - w_ratio) + w_ratio
++#            for c in range(3):
++#                img[:, :, c] = color_mask[c]
+             e = masks[:, :, i]
+ 
+             _, contour, hier = cv2.findContours(
+@@ -333,8 +338,8 @@ def vis_one_image(
+                 polygon = Polygon(
+                     c.reshape((-1, 2)),
+                     fill=True, facecolor=color_mask,
+-                    edgecolor='w', linewidth=1.2,
+-                    alpha=0.5)
++                    edgecolor='w', linewidth=4,
++                    alpha=0.7)
+                 ax.add_patch(polygon)
+ 
+         # show keypoints
